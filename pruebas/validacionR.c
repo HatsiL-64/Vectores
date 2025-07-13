@@ -6,6 +6,7 @@ typedef struct {
   double magnitud;
   double angulo;
   double* comp;
+  int dimensiones;
 } vector;
 
 // La funcion scani() sirve para crear cadenas de texto dinamicas de esta forma evitas tener problemas
@@ -37,6 +38,8 @@ char** split(char str[], char lim[], int *nPalabras)
   *nPalabras = 1;
 
   array[0] = strtok(str, lim);
+  if(array[0] == NULL)
+    return NULL;
   while ((array[*nPalabras] = strtok(NULL, lim)) != NULL) {
     (*nPalabras)++;
     array = realloc(array, sizeof(char*) * (*nPalabras + 1));
@@ -48,9 +51,6 @@ char** split(char str[], char lim[], int *nPalabras)
 //
 char* trim(char* str)
 {
-  if(str == NULL)
-    return NULL;
-
   int fin = 0, inicio = 0, len = 0;
   
   while(str[len] != '\0')
@@ -71,25 +71,78 @@ char* trim(char* str)
   nstr[fin - inicio + 1] = '\0';
   return nstr;
 }
-void asignarComp(char str[], vector** vec)
+
+bool digito(char str[])
 {
-  //char* token;
-  //strtok(str, *vec.comp[1]);
+  int n = 0;
+  while (str[n] != '\0') {
+    if((str[n] >= 48 && str[n] <= 57) || str[n] == 46)
+      n++;
+    else 
+      return false;
+  }
+  return true;
+}
+
+void validaCrea(char str[], vector** vec)
+{
+  int n = 0;
+  char** componentes = NULL;
+  static int vez = 1, dUnica;
+  if(vez == 1)
+  {
+    componentes = split(str, " ", &dUnica);
+  }
+  else
+  {
+    int dimensiones;
+    componentes = split(str, " ", &dimensiones);
+    if(dimensiones != dUnica)
+    {
+      printf("La cantidad de dimensiones difieren entre los vectores\n");
+      return;
+    }
+  }
+  if(componentes == NULL)
+  {
+    printf("Entrada invalida\n");
+    return;
+  }
+
+  *vec = realloc(*vec, sizeof(vector) * vez);
+  (*vec)[vez - 1].comp = realloc((*vec)[vez - 1].comp, sizeof(double) * dUnica);
+  (*vec)[vez - 1].dimensiones = dUnica;
+  for(int i = 0; i < dUnica; i++)
+  {
+    if(!digito(componentes[i]) )
+    {
+      printf("Caracteres Invalidos\n");
+      return;
+    }
+  }
+  for(int i = 0; i < dUnica; i++)
+  {
+    (*vec)[vez - 1].comp[i] = atof(componentes[i]);
+  }
+  vez++;
+  free(componentes);
 }
 
 int main ()
 {
-  int n = 0, nPalabras;
+  int n = 0;
   char* respuesta = NULL;
-  char** palabras = NULL;
-  vector* vectores = malloc(sizeof(vector));
+  vector* vectores = NULL;
 
-  printf("Dame una cadena de texto: ");
+  printf("Dame los componentes de un vector");
   respuesta = trim(scani());
-  palabras = split(respuesta, " ", &nPalabras);
-
+  validaCrea(respuesta, &vectores);
+  printf("Tu vector tiene componentes:\n");
+  for (int i = 0; i <  vectores[0].dimensiones; i++) {
+    printf("%0.3f\t", vectores->comp[i]);
+  }
+  
   printf("\n");
-  free(palabras);
   free(respuesta);
   free(vectores->comp);
   free(vectores);
