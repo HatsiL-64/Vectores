@@ -88,7 +88,7 @@ bool digito(char str[])
 {
   int n = 0;
   while (str[n] != '\0') {
-    if((str[n] >= 48 && str[n] <= 57) || str[n] == 46)
+    if((str[n] >= 48 && str[n] <= 57) || str[n] == 46 || str[n] == 45)
       n++;
     else 
       return false;
@@ -222,7 +222,7 @@ bool multEscalar(char str[], vector** vec)
   char** componentes = NULL;
   int dimensiones;
 
-  componentes = split(str, " ",&dimensiones);
+  componentes = split(str, " ", &dimensiones);
   if(componentes == NULL)
   {
     printf("entrada invalida\n");
@@ -234,8 +234,7 @@ bool multEscalar(char str[], vector** vec)
   (*vec)[0].comp = malloc(sizeof(double) * dimensiones);
   (*vec)[0].dimensiones = dimensiones;
 
-  if()
-  for(int i = 0; i < dimensiones - 1; i++)
+  for(int i = 0; i < dimensiones; i++)
   {
     if(!digito(componentes[i])){
       printf("Caracteres invalidos\n");
@@ -243,11 +242,106 @@ bool multEscalar(char str[], vector** vec)
       return false;
     }
     else
-      (*vec)[0].comp[i] = atof(componentes[i])
+      (*vec)[0].comp[i] = atof(componentes[i]);
   }
 
   free(componentes);
-  return true:
+  return true;
+}
+
+bool productoEscalar(char str[], vector** vec)
+{
+  char** temp = NULL;
+  static int vez = 0, dimensiones;
+  int pruDim;
+
+  if(vez == 0)
+    temp = split(str, " ", &dimensiones);
+  else{
+    temp = split(str, " ", &pruDim);
+    if(pruDim != dimensiones){
+      printf("Las dimensiones difieren entre los vectores\n");
+      free(temp);
+      return false;
+    }
+  }
+  if(temp == NULL)
+  {
+    printf("Entrada invalida\n");
+    free(temp);
+    return false;
+  }
+ 
+  if(vez == 0)
+    *vec = malloc(sizeof(vector) * 2);
+  (*vec)[vez].comp = malloc(sizeof(double) * dimensiones);
+  (*vec)[vez].dimensiones = dimensiones;
+  (*vec)[vez].magnitud = 0;
+
+  for(int i = 0; i < dimensiones; i++){
+    if(!digito(temp[i])){
+      printf("Caracteres invalidos\n");
+      free(temp);
+      return false;
+    }
+    else
+      (*vec)[vez].comp[i] = atof(temp[i]);
+  }
+  vez++;
+  free(temp);
+  return true;
+}
+
+bool productoVectorial(char str[], vector** vec)
+{
+  char** temp = NULL;
+  static int vez = 0, dimensiones;
+  int pruDim;
+
+  if(vez == 0){
+    temp = split(str, " ", &dimensiones);
+    if(dimensiones != 3 && dimensiones != 2){
+      printf("Se requiere unicamente de 2 - 3 componentes");
+      free(temp);
+      return false;
+    }
+  }
+  else {
+    temp = split(str, " ", &pruDim);
+    if(pruDim != dimensiones){
+      printf("Las dimensiones difieren entre los vectores\n");
+      free(temp);
+      return false;
+    }
+  }
+  if(temp == NULL){
+    printf("Entrada invalida");
+    free(temp);
+    return false;
+  }
+
+  if(vez == 0){
+    *vec = malloc(sizeof(vector) * 3);
+    for(int i = 0; i < 3; i++)
+      (*vec)[i].comp = malloc(sizeof(double) * 3);
+  }
+  (*vec)[vez].dimensiones = dimensiones;
+  (*vec)[vez].magnitud = 0;
+
+  for(int i = 0; i < dimensiones; i++){
+    if(!digito(temp[i])){
+      printf("Caracteres invalidos\n");
+      free(temp);
+      return false;
+    }
+    else
+      (*vec)[vez].comp[i] = atof(temp[i]);
+  }
+  if(dimensiones == 2)
+    (*vec)[vez].comp[2] = 0;
+  vez++;
+  free(temp);
+  return true;
 }
 
 int main ()
@@ -371,22 +465,55 @@ inicio: //Etiqueta :)
       //n3-Multiplicacion
       for(int i = 0; i < vectores[0].dimensiones; i++)
         vectores[0].comp[i] *= escalar;
-      if(vectores[0].dimensiones == 2 || vectores[0].dimensiones == 3){
-        int temp = 0;
-        for(int i = 0; i < dimensiones; i++)
-          temp = temp + pow(vectores[0].comp[i], 2);
-        vectores[0].magnitud = sqrt(temp);
 
-      }
+      printf("Componentes: ");
+      for(int i = 0; i < vectores[0].dimensiones; i++)
+        printf("%0.3lf ", vectores[0].comp[i]);
 
     break;
     
     case '4':
-    
+      double suma = 0;
+      for(int i = 0; i < 2; i ++)
+      {
+        printf("Dame el vector %i\t", i + 1);
+        respuesta = trim(scani());
+        if(!productoEscalar(respuesta, &vectores))
+          i--;
+      }
+
+      // calculos
+      for(int i = 0; i < 2; i++){
+        for(int j = 0; j < vectores[0].dimensiones; j++)
+          vectores[i].magnitud += pow(vectores[i].comp[j], 2);
+        vectores[i].magnitud = sqrt(vectores[i].magnitud);
+      }
+      for(int i = 0; i < vectores[0].dimensiones;i++){  
+        vectores[0].comp[i] *= vectores[1].comp[i];
+        suma += vectores[0].comp[i];
+      }
+      vectores[0].angulo = rtd(acos(suma / (vectores[0].magnitud * vectores[1].magnitud)));
+
+      printf("Producto punto: %0.3lf\nAngulo entre los vectores: %0.3lf\n", suma, vectores[0].angulo);
     break;
     
     case '5':
-    
+      for(int i = 0; i < 2; i++){
+        printf("Dame el vector %i\t", i + 1);
+        respuesta = trim(scani());
+        if(!productoVectorial(respuesta, &vectores))
+          i--;
+      }
+
+      //calculos
+      vectores[2].comp[0] = (vectores[0].comp[1] * vectores[1].comp[2]) - (vectores[0].comp[2] * vectores[1].comp[1]);
+      vectores[2].comp[1] = (vectores[0].comp[2] * vectores[1].comp[0]) - (vectores[0].comp[0] * vectores[1].comp[2]);
+      vectores[2].comp[2] = (vectores[0].comp[0] * vectores[1].comp[1]) - (vectores[0].comp[1] * vectores[1].comp[0]);
+
+      printf("Componentes VR:\t");
+      for(int i = 0; i < 3; i++)
+        printf("%0.3lf ", vectores[2].comp[i]);
+
     break;
 
     case '6':
