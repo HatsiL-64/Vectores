@@ -34,18 +34,21 @@ char* scani()
 //
 char** split(char str[], char lim[], int *nPalabras)
 {
+  char* str2 = strdup(str);
   char** array = malloc(sizeof(char*) * 2);
   *nPalabras = 1;
 
-  array[0] = strtok(str, lim);
+  array[0] = strtok(str2, lim);
   if(array[0] == NULL)
     return NULL;
   while ((array[*nPalabras] = strtok(NULL, lim)) != NULL) {
     (*nPalabras)++;
     array = realloc(array, sizeof(char*) * (*nPalabras + 1));
   }
+  free(str2);
   return array;
 }
+//Me voy a matar ya llego el momento de mejorarla, strtok modifica la cadena original. No es cierto voy a hacer una copia de la cadena para que no modifique nada(me da flojera mejorar esto)
 
 //Funcion trim 
 //

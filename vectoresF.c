@@ -46,10 +46,11 @@ char* scani()
 //
 char** split(char str[], char lim[], int *nPalabras)
 {
+  char* str2 = strdup(str);
   char** array = malloc(sizeof(char*) * 2);
   *nPalabras = 1;
 
-  array[0] = strtok(str, lim);
+  array[0] = strtok(str2, lim);
   if(array[0] == NULL)
     return NULL;
   while ((array[*nPalabras] = strtok(NULL, lim)) != NULL) {
@@ -98,21 +99,29 @@ bool digito(char str[])
 //---------------------------------------------//
 
 void creaVector(int numVector, int dimensiones, vector** vec){
-  static int dimReferencia = dimensiones;
-  if(dimReferencia != dimensiones)
-    return;
   *vec = realloc(*vec, sizeof(vector) * numVector);
-  (*vec)[numVector - 1].angulos = malloc(sizeof(double) * (dimensiones - 1));
-  (*vec)[numVector - 1].componentes = malloc(sizeof(double) * dimensiones);
+  (*vec)[numVector - 1].angulo = malloc(sizeof(double) * (dimensiones - 1));
+  (*vec)[numVector - 1].comp = malloc(sizeof(double) * dimensiones);
   (*vec)[numVector - 1].magnitud = 0;
   (*vec)[numVector - 1].dimensiones = dimensiones;
 }
 
-bool validaEntrada(char input[]){
+bool validaEntrada(char input[], int* palabras){
   char** elementos = NULL;
   int cElementos;
-  
+
+  if((strcmp(input, "=")) == 0){
+    return false;
+  }
+
   elementos = split(input, " ", &cElementos);
+  static int dimReferencia;
+  static int init = 0;
+
+  if(!init){
+    dimReferencia = cElementos;
+    init = 1;
+  }
   if(elementos == NULL){
     printf("Entrada invalida\n");
     return false;
@@ -120,278 +129,41 @@ bool validaEntrada(char input[]){
   for(int i = 0; i < cElementos; i++){
     if(!digito(elementos[i])){
       printf("Caracteres invalidos\n");
-      for(int j = 0; j < cElementos; j++)
-        free(elementos[j]);
       free(elementos);
-      return 0;
+      return false;
     }
   }
-  for(int j = 0; j < cElementos; j++)
-    free(elementos[j]);
+  if(cElementos != dimReferencia){
+    printf("Las dimensiones entre los vectores no deben variar\n");
+    free(elementos);
+    return false;
+  }
+
+  *palabras = cElementos;
   free(elementos);
-  return false;
+  return true;
 }
 
 //Tiene dos opciones, la 1 asigna valores a la magnitud y angulos, la segunda opcion asigna valor a los componentes
 void asignaDatos(vector* vec, char input[], int opc){
   int nElementos;
-  char** elementos = split(input, " ", &nElementos);
+  char** elementos = NULL;
+  elementos = split(input, " ", &nElementos);
   if(opc == 1){
-    vec;
+    vec->magnitud = atof(elementos[0]);
+    for(int i = 1; i < nElementos; i++)
+      vec->angulo[i-1] = atof(elementos[i]);
   }
-}
-
-//Esta funcion basicamente te hace toda la entrada en la suma de componentes. Solo requiere el array con los vectores y la str de donde sacar los datos.
-//Ya incluye la validacion y creacion de los vectores. Solo llamala despues de recibir una cadena con scani
-//Todas las funciones siguientes tienen el mismo fin, validar y la entrada de los datos
-bool sumaCompEntrada(char str[], vector** vec)
-{
-  int n = 0;
-  char** componentes = NULL;
-  static int vez = 1, dUnica;
-
-  if(vez == 1)
-  {
-    componentes = split(str, " ", &dUnica);
+  if(opc == 2){
+    for(int i = 0; i < nElementos; i++)
+      vec->comp[i] = atof(elementos[i]);
   }
-  else
-  {
-    int dimensiones;
-    componentes = split(str, " ", &dimensiones);
-    if(dimensiones != dUnica)
-    {
-      printf("La cantidad de dimensiones difieren entre los vectores\n");
-      free(componentes);
-      return false;
-    }
-  }
-  if(componentes == NULL)
-  {
-    printf("Entrada invalida\n");
-    return false;
-  }
-
-  *vec = realloc(*vec, sizeof(vector) * vez);
-  (*vec)[vez - 1].comp = malloc(sizeof(double) * dUnica);
-  (*vec)[vez - 1].dimensiones = dUnica;
-  for(int i = 0; i < dUnica; i++)
-  {
-    if(!digito(componentes[i]) )
-    {
-      printf("Caracteres Invalidos\n");
-      return false;
-    }
-    (*vec)[vez - 1].comp[i] = atof(componentes[i]);
-  }
-
-  vez++;
-  free(componentes);
-  return true;
-}
-
-bool sumaMagnitudEntrada(char str[], vector** vec)
-{
-  char** magnitudDeg = NULL;
-  static int vez = 1;
-  int dimensiones;
-
-  magnitudDeg = split(str, " ", &dimensiones);
-  if(dimensiones != 2)
-  {
-    printf("Solo se requieren dos datos\n");
-    free(magnitudDeg);
-    return false;
-  }
-  if(magnitudDeg == NULL)
-  {
-    printf("Entrada invalida\n");
-    free(magnitudDeg);
-    return false;
-  }
-
-  *vec = realloc(*vec, sizeof(vector) * vez);
-  (*vec)[vez - 1].comp = malloc(sizeof(double) * 2);
-  (*vec)[vez - 1].dimensiones = 2;
-  
-  if(!digito(magnitudDeg[0]) || !digito(magnitudDeg[1])){
-    printf("Caracteres invalidos\n");
-    free(magnitudDeg);
-    return false;
-  }
-  else {
-    (*vec)[vez - 1].magnitud = atof(magnitudDeg[0]);
-    (*vec)[vez - 1].angulo = atof(magnitudDeg[1]);
-  }
-  
-  vez++;
-  free(magnitudDeg);
-  return true;
-}
-
-bool vectorComp(char str[], vector** vec)
-{
-  char** componentes = NULL;
-  int dimensiones;
-
-  componentes = split(str, " ", &dimensiones);
-  if(dimensiones != 2){
-    printf("Solo se requieren dos datos\n");
-    free(componentes);
-    return false;
-  }
-  if(componentes == NULL){
-    printf("Entrada invalida\n");
-    free(componentes);
-    return false;
-  }
-
-  *vec = malloc(sizeof(vector));
-  (*vec)[0].comp = malloc(sizeof(double) * 2);
-
-  if(!digito(componentes[0]) && !digito(componentes[1])){
-    printf("Caracteres invalidos\n");
-    free(componentes);
-    return false;
-  }
-  else {
-    (*vec)[0].comp[0] = atof(componentes[0]);
-    (*vec)[0].comp[1] = atof(componentes[1]);
-  }
-
-  free(componentes);
-  return true;
-}
-
-bool multEscalar(char str[], vector** vec)
-{
-  char** componentes = NULL;
-  int dimensiones;
-
-  componentes = split(str, " ", &dimensiones);
-  if(componentes == NULL)
-  {
-    printf("entrada invalida\n");
-    free(componentes);
-    return false;
-  }
-  
-  *vec = malloc(sizeof(vector));
-  (*vec)[0].comp = malloc(sizeof(double) * dimensiones);
-  (*vec)[0].dimensiones = dimensiones;
-
-  for(int i = 0; i < dimensiones; i++)
-  {
-    if(!digito(componentes[i])){
-      printf("Caracteres invalidos\n");
-      free(componentes);
-      return false;
-    }
-    else
-      (*vec)[0].comp[i] = atof(componentes[i]);
-  }
-
-  free(componentes);
-  return true;
-}
-
-bool productoEscalar(char str[], vector** vec)
-{
-  char** temp = NULL;
-  static int vez = 0, dimensiones;
-  int pruDim;
-
-  if(vez == 0)
-    temp = split(str, " ", &dimensiones);
-  else{
-    temp = split(str, " ", &pruDim);
-    if(pruDim != dimensiones){
-      printf("Las dimensiones difieren entre los vectores\n");
-      free(temp);
-      return false;
-    }
-  }
-  if(temp == NULL)
-  {
-    printf("Entrada invalida\n");
-    free(temp);
-    return false;
-  }
- 
-  if(vez == 0)
-    *vec = malloc(sizeof(vector) * 2);
-  (*vec)[vez].comp = malloc(sizeof(double) * dimensiones);
-  (*vec)[vez].dimensiones = dimensiones;
-  (*vec)[vez].magnitud = 0;
-
-  for(int i = 0; i < dimensiones; i++){
-    if(!digito(temp[i])){
-      printf("Caracteres invalidos\n");
-      free(temp);
-      return false;
-    }
-    else
-      (*vec)[vez].comp[i] = atof(temp[i]);
-  }
-  vez++;
-  free(temp);
-  return true;
-}
-
-bool productoVectorial(char str[], vector** vec)
-{
-  char** temp = NULL;
-  static int vez = 0, dimensiones;
-  int pruDim;
-
-  if(vez == 0){
-    temp = split(str, " ", &dimensiones);
-    if(dimensiones != 3 && dimensiones != 2){
-      printf("Se requiere unicamente de 2 - 3 componentes");
-      free(temp);
-      return false;
-    }
-  }
-  else {
-    temp = split(str, " ", &pruDim);
-    if(pruDim != dimensiones){
-      printf("Las dimensiones difieren entre los vectores\n");
-      free(temp);
-      return false;
-    }
-  }
-  if(temp == NULL){
-    printf("Entrada invalida");
-    free(temp);
-    return false;
-  }
-
-  if(vez == 0){
-    *vec = malloc(sizeof(vector) * 3);
-    for(int i = 0; i < 3; i++)
-      (*vec)[i].comp = malloc(sizeof(double) * 3);
-  }
-  (*vec)[vez].dimensiones = dimensiones;
-  (*vec)[vez].magnitud = 0;
-
-  for(int i = 0; i < dimensiones; i++){
-    if(!digito(temp[i])){
-      printf("Caracteres invalidos\n");
-      free(temp);
-      return false;
-    }
-    else
-      (*vec)[vez].comp[i] = atof(temp[i]);
-  }
-  if(dimensiones == 2)
-    (*vec)[vez].comp[2] = 0;
-  vez++;
-  free(temp);
-  return true;
+  free(elementos);
 }
 
 int main ()
 {
-  int cont, ceros;
+  int cont, dimensiones;
   bool salir;
   char opcion, *respuesta = NULL;
   vector* vectores = NULL;
@@ -415,36 +187,35 @@ inicio: //Etiqueta :)
       while (salir) {
         printf("Dame los componentes del vector %i\t", cont + 1);
         respuesta = trim(scani());
-        if(!sumaCompEntrada(respuesta, &vectores)){
-          printf("Ingresa de nuevo los datos\n");
-        }
-        else {
-          ceros = 0;
-          while (ceros < vectores[0].dimensiones && vectores[cont].comp[ceros] == 0)
-            ceros++;
-          if(ceros == vectores[0].dimensiones)
-            salir = false;
+        if(validaEntrada(respuesta, &dimensiones)){
+          creaVector(cont + 1, dimensiones, &vectores);
+          asignaDatos(&vectores[cont], respuesta, 2);
           cont++;
+        }else {
+          if(respuesta[0] == '='){
+            creaVector(cont + 1, vectores[cont].dimensiones, &vectores);
+            break;
+          }
         }
       }
 
       //Suma de componentes
       for(int i = 0; i < vectores[0].dimensiones; i++){
-        for(int j = 0; j < cont - 1; j++)
-          vectores[cont-1].comp[i] += vectores[j].comp[i];
+        for(int j = 0; j < cont; j++)
+          vectores[cont].comp[i] += vectores[j].comp[i];
       }
 
       //Salida de datos
-      for(int i = 0; i < cont; i++){
-        if(i < cont - 1)
+      for(int i = 0; i <= cont; i++){
+        if(i < cont)
           printf("Vector %i", i + 1);
-        if(i == cont - 1)
+        if(i == cont)
           printf("vector R");
         for(int j = 0; j < vectores[0].dimensiones; j++)
           printf("\t%0.3lf", vectores[i].comp[j]);
         printf("\n");
       }
-    break;
+    break;/*
 
     case '2':
       cont = 0;
@@ -582,7 +353,7 @@ inicio: //Etiqueta :)
       printf("Magnitud = %0.3lf\nAngulo = %0.3lf", vectores[0].magnitud, vectores[0].angulo);
 
     break;
-    
+    */
     case '?':
       printf("En este programa la entrada de datos se solicita que sea de la siguiente manera:\nx y z\na b c\n0 0 0\nRequiere de una cadena que contenga la informacion del vector separada por espacios");
       printf("\nPara terminar con la entrada de datos introduce una cadena donde todos los valores sean 0.\nSolicito que todos los vectores tengan la misma cantidad de datos.\n");
